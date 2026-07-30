@@ -1,0 +1,7 @@
+@echo off
+REM Copiar como run_check.bat (gitignored) y completar con las credenciales reales.
+set SUPABASE_URL=
+set SUPABASE_ANON_KEY=
+set GMAIL_USER=
+set GMAIL_APP_PASSWORD=
+"C:\ruta\a\python.exe" "C:\claude\river-tickets\monitor_river_entradas.py"

@@ -1,0 +1,4 @@
+check.log
+__pycache__/
+*.pyc
+run_check.bat

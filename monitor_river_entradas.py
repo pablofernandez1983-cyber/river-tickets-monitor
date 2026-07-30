@@ -35,6 +35,7 @@ LOG_PATH = os.path.join(BASE_DIR, "check.log")
 API_LIST = "https://www.riverplate.com/api/v1/news/published"
 API_DETAIL = "https://www.riverplate.com/api/v1/news/{slug}"
 CATEGORY_SLUG = "entradas"
+CATEGORY_ID = 21  # id numerico de la categoria "Entradas" (visto en categoria.id de /news/{slug})
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
 def _require_env(name: str) -> str:
@@ -240,15 +241,22 @@ def send_email(subject: str, body: str) -> None:
 
 def main() -> None:
     try:
-        resp = requests.get(API_LIST, headers=HEADERS, timeout=20)
+        resp = requests.get(
+            API_LIST,
+            headers=HEADERS,
+            params={"context": "general", "limit": 20, "categoria": CATEGORY_ID},
+            timeout=20,
+        )
         resp.raise_for_status()
-        items = resp.json().get("data", [])
+        entradas = resp.json().get("data", [])
     except Exception as e:
         log(f"ERROR trayendo listado de noticias: {e}")
         return
 
+    # el filtro por categoria ya lo hace la API (parametro categoria=21); esto
+    # es solo un resguardo por si algun item viniera mal categorizado
     entradas = [
-        it for it in items
+        it for it in entradas
         if any(c.get("slug") == CATEGORY_SLUG for c in it.get("categories", []))
     ]
 

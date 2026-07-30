@@ -1,0 +1,27 @@
+name: Chequeo de salud (pagina vs API)
+
+on:
+  schedule:
+    - cron: '17 12 * * *'   # 1 vez por dia, ~09:17 hora Argentina
+  workflow_dispatch: {}
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - run: pip install -r requirements-healthcheck.txt
+      - run: playwright install --with-deps chromium
+
+      - name: Comparar pagina real vs API
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python check_api_health.py

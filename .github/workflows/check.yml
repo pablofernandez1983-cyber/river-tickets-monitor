@@ -2,7 +2,7 @@ name: Chequear entradas River
 
 on:
   schedule:
-    - cron: '13 * * * *'   # cada hora, en :13 (UTC) para no pisar el minuto 0
+    - cron: '*/5 * * * *'   # cada 5 minutos (piso minimo de GitHub Actions)
   workflow_dispatch: {}
 
 jobs:

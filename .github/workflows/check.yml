@@ -25,4 +25,6 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          FOSFOVITA_ALARMA_BACKEND_URL: ${{ secrets.FOSFOVITA_ALARMA_BACKEND_URL }}
+          FOSFOVITA_ALARMA_API_KEY: ${{ secrets.FOSFOVITA_ALARMA_API_KEY }}
         run: python monitor_river_entradas.py

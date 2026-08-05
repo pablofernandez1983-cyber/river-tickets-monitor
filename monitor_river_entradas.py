@@ -55,6 +55,11 @@ GMAIL_USER = _require_env("GMAIL_USER")
 GMAIL_APP_PASSWORD = _require_env("GMAIL_APP_PASSWORD")
 NOTIFY_TO = "pablofernandez1983@gmail.com"
 
+# Opcionales: si estan seteadas, avisan a la app Fosfovita Alarma por push (FCM) que hay
+# recordatorios nuevos para que reprograme las alarmas sin esperar a que se abra la app.
+FOSFOVITA_ALARMA_BACKEND_URL = os.environ.get("FOSFOVITA_ALARMA_BACKEND_URL", "")
+FOSFOVITA_ALARMA_API_KEY = os.environ.get("FOSFOVITA_ALARMA_API_KEY", "")
+
 CATEGORIA_PABLO = "Socio sin lugar en el Monumental"
 HEADING_MARKER = "SOCIOS SIN TU LUGAR"
 
@@ -227,6 +232,28 @@ def insertar_recordatorios(titulo: str, rival: str, venta_dt: datetime) -> None:
     log(f"Insertadas {len(filas)} filas en recordatorios_app para '{titulo}'.")
 
 
+def notify_app_sync() -> None:
+    """Avisa a la app Fosfovita Alarma (push FCM silencioso, sin sonido ni UI) que hay
+    recordatorios nuevos para que reconcilie y reprograme alarmas en segundo plano — evita
+    depender de que se abra la app para que las alarmas insertadas por SQL queden armadas.
+    Best-effort: las filas ya quedaron en Supabase, asi que un fallo aca no debe cortar
+    el resto del flujo (mail de aviso, guardado de estado)."""
+    if not FOSFOVITA_ALARMA_BACKEND_URL or not FOSFOVITA_ALARMA_API_KEY:
+        log("Aviso: FOSFOVITA_ALARMA_BACKEND_URL/API_KEY no configurados, no se notifica push a la app.")
+        return
+    try:
+        resp = requests.post(
+            f"{FOSFOVITA_ALARMA_BACKEND_URL}/notify_sync",
+            headers={"X-API-Key": FOSFOVITA_ALARMA_API_KEY},
+            json={"usuario": SUPABASE_USER},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        log("Push de sync mandado a la app.")
+    except Exception as e:
+        log(f"ERROR mandando push de sync a la app (no bloqueante): {e}")
+
+
 def send_email(subject: str, body: str) -> None:
     msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = subject
@@ -294,6 +321,7 @@ def main() -> None:
         if venta_dt:
             try:
                 insertar_recordatorios(titulo, rival, venta_dt)
+                notify_app_sync()
                 resumen_mail.append(
                     f"- {titulo}\n  Venta para vos ({CATEGORIA_PABLO}): {venta_dt.strftime('%d/%m/%Y %H:%M')} hs.\n"
                     f"  Se cargaron 4 recordatorios en Fosfovita (inmediato, 1 dia, 1 hora y 5 min antes)."

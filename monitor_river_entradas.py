@@ -209,9 +209,11 @@ def insertar_recordatorios(titulo: str, rival: str, venta_dt: datetime) -> None:
             "scheduled_at": (venta_dt - timedelta(minutes=5)).isoformat(),
         },
     ]
-    for fila in filas:
+    for i, fila in enumerate(filas):
+        # Solo la ultima (5 min antes) suena como alarma real (ignora silencio); las
+        # primeras 3 son notificaciones normales para no saturar de alarmas al usuario.
         fila.update({
-            "tipo": "notificacion",
+            "tipo": "alarma" if i == len(filas) - 1 else "notificacion",
             "usuario": SUPABASE_USER,
             "completado": False,
             "borrado": False,

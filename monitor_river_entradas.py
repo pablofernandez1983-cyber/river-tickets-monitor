@@ -301,6 +301,7 @@ def main() -> None:
         save_state([{"id": it["id"], "slug": it["slug"], "updatedAt": it.get("updatedAt")} for it in entradas])
         return
 
+    ahora = datetime.now(tz=ARG_TZ)
     resumen_mail = []
     for it in nuevos:
         titulo = it["title"]
@@ -320,6 +321,12 @@ def main() -> None:
         venta_dt = parse_sale_datetime(texto, published_dt)
         rival = extraer_rival(titulo)
 
+        if venta_dt and venta_dt < ahora:
+            # el sitio a veces re-toca noticias viejas (updatedAt cambia) sin que la
+            # venta siga vigente; no tiene sentido cargar recordatorios ya vencidos
+            log(f"'{titulo}': venta ya vencida ({venta_dt:%d/%m/%Y %H:%M}), no se cargan recordatorios.")
+            continue
+
         if venta_dt:
             try:
                 insertar_recordatorios(titulo, rival, venta_dt)
@@ -338,12 +345,15 @@ def main() -> None:
                 f"'{CATEGORIA_PABLO}'. Revisar a mano:\n  https://www.riverplate.com/noticias/entradas/{slug}"
             )
 
-    send_email(
-        "🎟️ Nueva noticia de entradas River",
-        "Se detectaron noticias nuevas de categoria Entradas en riverplate.com:\n\n"
-        + "\n\n".join(resumen_mail),
-    )
-    log("Email de aviso enviado.")
+    if resumen_mail:
+        send_email(
+            "🎟️ Nueva noticia de entradas River",
+            "Se detectaron noticias nuevas de categoria Entradas en riverplate.com:\n\n"
+            + "\n\n".join(resumen_mail),
+        )
+        log("Email de aviso enviado.")
+    else:
+        log("Todas las novedades eran ventas ya vencidas; no se manda mail.")
 
     save_state([{"id": it["id"], "slug": it["slug"], "updatedAt": it.get("updatedAt")} for it in entradas])
 

@@ -321,10 +321,18 @@ def main() -> None:
         venta_dt = parse_sale_datetime(texto, published_dt)
         rival = extraer_rival(titulo)
 
+        published_dt_arg = published_dt.replace(tzinfo=ARG_TZ)
+
         if venta_dt and venta_dt < ahora:
             # el sitio a veces re-toca noticias viejas (updatedAt cambia) sin que la
             # venta siga vigente; no tiene sentido cargar recordatorios ya vencidos
             log(f"'{titulo}': venta ya vencida ({venta_dt:%d/%m/%Y %H:%M}), no se cargan recordatorios.")
+            continue
+
+        if not venta_dt and published_dt_arg < ahora - timedelta(days=3):
+            # no se pudo leer la fecha de venta, pero la noticia en si es vieja
+            # (re-tocada por el sitio) asi que tampoco vale la pena avisar por mail
+            log(f"'{titulo}': no se pudo leer fecha de venta y la noticia es vieja (publicada {published_dt_arg:%d/%m/%Y}), se ignora.")
             continue
 
         if venta_dt:

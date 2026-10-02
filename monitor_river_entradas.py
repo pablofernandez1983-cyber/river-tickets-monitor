@@ -70,8 +70,9 @@ MESES = {
     "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
     "noviembre": 11, "diciembre": 12,
 }
+# admite "1 de octubre", "1° de octubre", "1º de octubre", "1ro de octubre"
 DATE_RE = re.compile(
-    r"(\d{1,2})\s+de\s+(" + "|".join(MESES.keys()) + r")"
+    r"(\d{1,2})\s*(?:°|º|ro)?\s+de\s+(" + "|".join(MESES.keys()) + r")"
     r"(?:[^.\n]{0,20}?a las\s+(\d{1,2})(?::(\d{2}))?)?",
     re.IGNORECASE,
 )

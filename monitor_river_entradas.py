@@ -15,7 +15,7 @@ El sitio de River es una SPA (React) sin contenido en el HTML crudo, por eso se
 usa la API JSON que consume el propio frontend en vez de scrapear la pagina.
 
 Credenciales: se leen SIEMPRE de variables de entorno (SUPABASE_URL,
-SUPABASE_ANON_KEY, GMAIL_USER, GMAIL_APP_PASSWORD) — nunca hardcodeadas aca,
+SUPABASE_SERVICE_KEY, GMAIL_USER, GMAIL_APP_PASSWORD) — nunca hardcodeadas aca,
 porque este archivo vive en un repo de GitHub. En GitHub Actions vienen de
 Secrets; localmente las setea run_check.bat antes de invocar python.
 """
@@ -47,7 +47,8 @@ def _require_env(name: str) -> str:
 
 
 SUPABASE_URL = _require_env("SUPABASE_URL")
-SUPABASE_ANON_KEY = _require_env("SUPABASE_ANON_KEY")
+# Service key: las tablas automation_state y recordatorios_app tienen RLS y la anon no entra.
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or _require_env("SUPABASE_ANON_KEY")
 SUPABASE_USER = "pablo"
 STATE_KEY = "river_tickets_entradas"
 
@@ -87,8 +88,8 @@ def log(msg: str) -> None:
 
 def _supabase_headers() -> dict:
     return {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
     }
 
@@ -223,8 +224,8 @@ def insertar_recordatorios(titulo: str, rival: str, venta_dt: datetime) -> None:
     resp = requests.post(
         f"{SUPABASE_URL}/rest/v1/recordatorios_app",
         headers={
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": "application/json",
             "Prefer": "return=representation",
         },
